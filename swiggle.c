@@ -349,7 +349,7 @@ processdir(char *dir)
 		if ((stat(buf, &sb) == 0 && !S_ISREG(sb.st_mode)) ||
 		    ((p = strrchr(dent->d_name, '.')) == NULL))
 #else
-		if ((dent->d_type != DT_REG) ||
+		if ((dent->d_type != DT_REG) || (dent->d_name[0] == '.') ||
 		    (p = strrchr(dent->d_name, '.')) == NULL)
 #endif
 			continue;
@@ -357,7 +357,8 @@ processdir(char *dir)
 		p++;
 		
 		/* We currently only handle .jpg files. */
-		if (strcasecmp(p, "jpg" ) != 0 && strcasecmp(p, "jpeg") != 0) 
+		if (strcasestr(p, "html" ) != NULL ||
+		    strcasestr(p, "tmp" ) != NULL)
 			continue;
 		
 		/* Allocate memory for this image and store it in the list. */
@@ -479,6 +480,10 @@ create_images(char *dir, struct imginfo *imglist, int imgcount)
 			    ori, strerror(errno));
 			exit(EXIT_FAILURE);
 		}
+		
+		if (strcasestr(imglist[i].filename, "jpg" ) != NULL ||
+		    strcasestr(imglist[i].filename, "jpeg" ) != NULL) {
+
 		jpeg_create_decompress(&dinfo);
 		jpeg_stdio_src(&dinfo, infile);
 		(void) jpeg_read_header(&dinfo, TRUE);
@@ -489,6 +494,15 @@ create_images(char *dir, struct imginfo *imglist, int imgcount)
 		imglist[i].height = dinfo.image_height;
 		imglist[i].description = get_img_desc(id, idcount,
 		    imglist[i].filename);
+
+		} else {
+			imglist[i].filesize = sb.st_size;
+			imglist[i].mtime = sb.st_mtime;
+			imglist[i].width = 0;
+			imglist[i].height = 0;
+			imglist[i].description = "Not image";
+			cached = 1;
+		}
 		
 		/* Get the EXIF information from the file. */
 		if ((ed = exif_data_new_from_file(ori)) != NULL) {
@@ -511,7 +525,11 @@ create_images(char *dir, struct imginfo *imglist, int imgcount)
 		}
 		
 		/* ratio needed to scale image correctly. */
+		if (imglist[i].width == 0 || imglist[i].height == 0)
+			ratio = 1.0;
+		else
 		ratio = ((double)imglist[i].width / (double)imglist[i].height);
+
 		imglist[i].scaleheight = scaleheight;
 		imglist[i].scalewidth = (int)((double)imglist[i].scaleheight *
 		    ratio + 0.5);
@@ -622,6 +640,10 @@ create_images(char *dir, struct imginfo *imglist, int imgcount)
 		else
 			cached = check_cache(final, &sb);
 		
+		if (strcasestr(imglist[i].filename, "jpg" ) == NULL &&
+		    strcasestr(imglist[i].filename, "jpeg" ) == NULL)
+			cached = 1;
+
 		/* We need to generate the thumbnail. */
 		if (cached == 0) {
 			/*
@@ -724,6 +746,8 @@ create_images(char *dir, struct imginfo *imglist, int imgcount)
 		}
 		
 		fclose(infile);
+		if (strcasestr(imglist[i].filename, "jpg" ) != NULL ||
+		    strcasestr(imglist[i].filename, "jpeg" ) != NULL)
 		jpeg_destroy_decompress(&dinfo);
 		
 		/*
