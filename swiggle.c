@@ -67,7 +67,7 @@ char generated[1024];
 char *progname = "";
 int cols = 5;
 int exif_display = 1; /* By default, display the exif data */
-int rows = 3;
+int rows = 5;
 int scaleheight = 480;
 int thumbheight = 96;
 int force = 0;
