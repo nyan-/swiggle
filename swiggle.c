@@ -62,7 +62,7 @@
  * Global variables.
  */
 char *albumdesc = "";
-char *defaultdesc = "my webgallery";
+char *defaultdesc = "Web Gallery";
 char generated[1024];
 char *progname = "";
 int cols = 5;
