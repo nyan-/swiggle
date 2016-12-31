@@ -1,7 +1,7 @@
 # Makefile for swiggle
 #
 # $Id: Makefile,v 1.8 2003/10/22 21:01:18 le Exp $
-CC ?= gcc
+CC = cc
 PROGRAM = swiggle
 OBJS = swiggle.o resize.o html.o
 HEADER = swiggle.h
